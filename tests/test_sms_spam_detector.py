@@ -95,9 +95,10 @@ class TestSpamClassifier(unittest.TestCase):
         """Test pipeline creation."""
         pipeline = self.classifier.create_pipeline()
         self.assertIsNotNone(pipeline)
-        self.assertEqual(len(pipeline.steps), 2)
-        self.assertEqual(pipeline.steps[0][0], 'vectorizer')
-        self.assertEqual(pipeline.steps[1][0], 'classifier')
+        self.assertEqual(len(pipeline.steps), 3)  # preprocessor, vectorizer, classifier
+        self.assertEqual(pipeline.steps[0][0], 'preprocessor')
+        self.assertEqual(pipeline.steps[1][0], 'vectorizer')
+        self.assertEqual(pipeline.steps[2][0], 'classifier')
 
 
 class TestModelEvaluator(unittest.TestCase):
@@ -145,9 +146,15 @@ class TestIntegration(unittest.TestCase):
             ] * 10
         })
 
-        # Initialize components
+        # Initialize components with safe vectorizer parameters for small datasets
         preprocessor = TextPreprocessor(download_nltk_data=False)
-        classifier = SpamClassifier()
+        vectorizer_params = {
+            "min_df": 1,
+            "max_df": 1.0,  # Use all documents
+            "ngram_range": (1, 1),  # Only unigrams for small dataset
+            "stop_words": None  # Don't use stop words for small dataset
+        }
+        classifier = SpamClassifier(vectorizer_params=vectorizer_params)
 
         # Preprocess data
         processed_messages = preprocessor.preprocess_text(sample_data['message'])

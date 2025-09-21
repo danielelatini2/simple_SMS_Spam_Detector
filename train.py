@@ -13,11 +13,15 @@ from src.sms_spam_detector import DataLoader, TextPreprocessor, SpamClassifier, 
 
 def setup_logging():
     """Configure logging for the application."""
+    # Create logs directory if it doesn't exist
+    logs_dir = Path(__file__).parent / "logs"
+    logs_dir.mkdir(exist_ok=True)
+    
     logging.basicConfig(
         level=logging.INFO,
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
         handlers=[
-            logging.FileHandler('logs/training.log'),
+            logging.FileHandler(logs_dir / 'training.log'),
             logging.StreamHandler()
         ]
     )
@@ -36,7 +40,8 @@ def main():
     data_loader = DataLoader()
 
     # Download dataset if not exists
-    if not os.path.exists("data/raw/sms_spam_collection/SMSSpamCollection"):
+    dataset_file = data_loader.extract_path / "SMSSpamCollection"
+    if not dataset_file.exists():
         logger.info("Dataset not found, downloading...")
         data_loader.download_dataset()
 
@@ -105,8 +110,10 @@ def main():
 
     # Step 6: Save model
     logger.info("Step 6: Saving model")
-    os.makedirs("models", exist_ok=True)
-    classifier.save_model("models/spam_classifier.joblib")
+    models_dir = Path(__file__).parent / "models"
+    models_dir.mkdir(exist_ok=True)
+    model_path = models_dir / "spam_classifier.joblib"
+    classifier.save_model(str(model_path))
 
     logger.info("Training pipeline completed successfully!")
 

@@ -329,6 +329,48 @@ class SpamClassifier:
 
         return train_scores_mean, validation_scores_mean, train_scores_std, validation_scores_std
 
+    def train_simple(
+        self,
+        X: pd.Series,
+        y: pd.Series,
+        test_size: float = 0.2,
+        random_state: int = 42
+    ) -> float:
+        """Simple training method for testing purposes.
+
+        Args:
+            X: Text data for training.
+            y: Labels for training.
+            test_size: Proportion of data to use for testing.
+            random_state: Random state for reproducibility.
+
+        Returns:
+            float: Test F1 score.
+        """
+        logger.info("Starting simple training")
+
+        # Prepare labels
+        y_binary = self.prepare_labels(y)
+
+        # Split data
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y_binary, test_size=test_size, random_state=random_state, stratify=y_binary
+        )
+
+        # Create and train pipeline
+        self.pipeline = self.create_pipeline()
+        self.pipeline.fit(X_train, y_train)
+        self.best_model = self.pipeline
+        self.is_trained = True
+
+        # Evaluate on test set
+        y_pred = self.pipeline.predict(X_test)
+        test_f1 = f1_score(y_test, y_pred)
+
+        logger.info(f"Simple training completed. Test F1 score: {test_f1:.4f}")
+
+        return test_f1
+
     def _get_default_param_grid(self) -> Dict[str, Any]:
         """Get default expanded parameter grid based on classifier type.
 

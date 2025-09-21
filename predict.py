@@ -22,18 +22,23 @@ def setup_logging():
 class SMSSpamPredictor:
     """Easy-to-use interface for SMS spam prediction."""
 
-    def __init__(self, model_path: str = "models/spam_classifier.joblib"):
+    def __init__(self, model_path: str = None):
         """Initialize the predictor.
 
         Args:
-            model_path: Path to the trained model file.
+            model_path: Path to the trained model file. If None, uses default location.
         """
+        if model_path is None:
+            # Use path relative to script location
+            script_dir = Path(__file__).parent
+            model_path = script_dir / "models" / "spam_classifier.joblib"
+        
         self.preprocessor = TextPreprocessor(download_nltk_data=False)
         self.classifier = SpamClassifier()
         self.evaluator = ModelEvaluator(self.preprocessor)
 
         # Load trained model
-        self.classifier.load_model(model_path)
+        self.classifier.load_model(str(model_path))
 
     def predict_single(self, message: str) -> dict:
         """Predict spam/ham for a single message.

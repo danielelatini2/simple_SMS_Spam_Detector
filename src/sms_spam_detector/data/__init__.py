@@ -6,6 +6,7 @@ import zipfile
 import io
 import pandas as pd
 from typing import Tuple, Optional
+from pathlib import Path
 import logging
 
 logger = logging.getLogger(__name__)
@@ -15,11 +16,22 @@ class DataLoader:
     """Handles data downloading, loading, and basic preprocessing."""
 
     DEFAULT_URL = "https://archive.ics.uci.edu/static/public/228/sms+spam+collection.zip"
-    DEFAULT_EXTRACT_PATH = "data/raw/sms_spam_collection"
-
-    def __init__(self, data_url: str = DEFAULT_URL, extract_path: str = DEFAULT_EXTRACT_PATH):
-        self.data_url = data_url
-        self.extract_path = extract_path
+    
+    def __init__(self, data_url: str = None, extract_path: str = None):
+        """Initialize DataLoader with default or custom parameters.
+        
+        Args:
+            data_url: URL to download dataset from. If None, uses default.
+            extract_path: Path to extract dataset. If None, uses default relative path.
+        """
+        self.data_url = data_url or self.DEFAULT_URL
+        
+        if extract_path is None:
+            # Use path relative to project root (3 levels up from this file)
+            project_root = Path(__file__).parent.parent.parent.parent
+            self.extract_path = project_root / "data" / "raw" / "sms_spam_collection"
+        else:
+            self.extract_path = Path(extract_path)
 
     def download_dataset(self) -> bool:
         """Download the SMS spam dataset from UCI repository.
@@ -50,7 +62,7 @@ class DataLoader:
             content: Downloaded zip file content.
         """
         try:
-            os.makedirs(self.extract_path, exist_ok=True)
+            self.extract_path.mkdir(parents=True, exist_ok=True)
             with zipfile.ZipFile(io.BytesIO(content)) as z:
                 z.extractall(self.extract_path)
                 logger.info("Dataset extraction successful")
@@ -68,7 +80,7 @@ class DataLoader:
             pd.DataFrame: Loaded dataset with 'label' and 'message' columns.
         """
         if file_path is None:
-            file_path = os.path.join(self.extract_path, "SMSSpamCollection")
+            file_path = self.extract_path / "SMSSpamCollection"
 
         try:
             df = pd.read_csv(
